@@ -707,52 +707,32 @@
                     }, 0);
                 }
 
-                // Play sound for new messages
-                checkAndPlaySound(messages.length);
+                // Play sound for new messages (chỉ người nhận)
+                checkAndPlaySound(messages);
             });
         }
 
-        // Check and play sound for new messages
+        // Check and play sound for new messages (chỉ người nhận)
         let lastMessageCount = 0;
-        function checkAndPlaySound(count) {
-            if (count > lastMessageCount && soundEnabled && lastMessageCount > 0) {
-                playNotificationSound();
+        function checkAndPlaySound(messages) {
+            // Kiểm tra nếu có tin nhắn mới từ người khác (không phải của mình)
+            const newMessages = messages.filter(msg => msg.sender !== currentUser);
+            
+            if (newMessages.length > 0 && soundEnabled && lastMessageCount > 0) {
+                const lastMessage = newMessages[newMessages.length - 1];
+                // Chỉ phát âm thanh nếu tin nhắn mới không phải của mình
+                if (lastMessage.sender !== currentUser) {
+                    playNotificationSound();
+                }
             }
-            lastMessageCount = count;
+            lastMessageCount = messages.length;
         }
 
         // Play notification sound from MP3 file
         function playNotificationSound() {
             const audio = new Audio('tingting.mp3');
             audio.volume = 0.5; // Điều chỉnh âm lượng từ 0-1 (0.5 = 50%)
-            audio.play().catch(err => {
-                console.log('Không thể phát âm thanh:', err);
-                // Fallback: phát beep nếu file MP3 không tải được
-                playFallbackBeep();
-            });
-        }
-
-        // Fallback beep nếu file MP3 không tìm thấy
-        function playFallbackBeep() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
-            } catch (e) {
-                console.log('Web Audio API không khả dụng');
-            }
+            audio.play();
         }
 
         // Escape HTML
